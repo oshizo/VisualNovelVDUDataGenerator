@@ -1,0 +1,7 @@
+*.otf
+*.ttf
+*.png
+*.jpg
+venv
+venv-test
+ipynb_checkpoints
