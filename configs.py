@@ -12,12 +12,15 @@ class Margin:
 
 @dataclass
 class CFG1:
+    text = ""
+    name_text = None
+    option_text = []
     W = 1920
     H = 1080
     bg_path = "./bgimages/generated_bg-20230408T030427Z-001/generated_bg/0001.png"
-    fg_path = "./fgimages/000000.png"
+    fg_pathlist = ["./fgimages/000000.png"]
     # キャラクターの位置
-    fg_tl = (200, 100)
+    fg_tl_list = [(200, 100)]
 
     # msgbox
     msgbox_tl = (35, 800)

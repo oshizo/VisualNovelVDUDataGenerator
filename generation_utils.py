@@ -1,6 +1,20 @@
 from PIL import Image, ImageDraw
 from configs import Margin
 
+hiragana_range = (0x3041, 0x3096)
+katakana_range = (0x30A1, 0x30F6)
+
+translation_table = str.maketrans(
+    {
+        chr(code): chr(code - hiragana_range[0] + katakana_range[0])
+        for code in range(hiragana_range[0], hiragana_range[1] + 1)
+    }
+)
+
+
+def to_katakana(text):
+    return text.translate(translation_table)
+
 
 def create_textbox(w, h, hex, alpha=255):
     shape = [(0, 0), (w, h)]

@@ -2,25 +2,30 @@ from generation_utils import create_textarea, create_textbox
 from PIL import Image, ImageFont
 from configs import CFG1
 
-
-class Output:
-    image: Image
-    text: str
-    name_text: str
-    option_texts = []
+from dataclasses import dataclass
+from colorutils import Color
 
 
-def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Output:
-    output = Output()
+@dataclass
+class Outputs:
+    image = None
+    text = None
+    name_text = None
+    option_texts: list
+
+
+def create_image(cfg: CFG1) -> Outputs:
+    output = Outputs(option_texts=[])
 
     # bg
     bg = Image.open(cfg.bg_path).resize((cfg.W, cfg.H))
     img = bg.copy()
 
     # character
-    fg = Image.open(cfg.fg_path)
-    fg = fg.resize((int(fg.width * (cfg.H / fg.height)), cfg.H))
-    img.paste(fg, cfg.fg_tl, fg)
+    for path, fg_tl in zip(cfg.fg_pathlist, cfg.fg_tl_list):
+        fg = Image.open(path)
+        fg = fg.resize((int(fg.width * (cfg.H / fg.height)), cfg.H))
+        img.paste(fg, fg_tl, fg)
 
     # message
     msgbox_size = (
@@ -31,13 +36,13 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
         w=msgbox_size[0], h=msgbox_size[1], hex=cfg.msgbox_hex, alpha=cfg.msgbox_alpha
     )
 
-    add_ruby = "<ruby>" in text
+    add_ruby = "<ruby>" in cfg.text
     msg_font = ImageFont.truetype(font=cfg.msg_font_path, size=cfg.msg_font_size)
     msg_ruby_font = ImageFont.truetype(
         font=cfg.msg_ruby_font_path, size=cfg.msg_ruby_font_size
     )
     msg_text_img, rendered_msg = create_textarea(
-        text,
+        cfg.text,
         w=msgbox_size[0] - (cfg.msg_margin.left + cfg.msg_margin.right),
         h=msgbox_size[1] - (cfg.msg_margin.top + cfg.msg_margin.bottom),
         margin=cfg.msg_margin,
@@ -57,7 +62,7 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
     output.text = rendered_msg
 
     # name
-    if name_text is not None:
+    if cfg.name_text is not None:
         namebox_size = (
             cfg.namebox_br[0] - cfg.namebox_tl[0],
             cfg.namebox_br[1] - cfg.namebox_tl[1],
@@ -69,13 +74,13 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
             alpha=cfg.namebox_alpha,
         )
 
-        add_ruby = "<ruby>" in name_text
+        add_ruby = "<ruby>" in cfg.name_text
         name_font = ImageFont.truetype(font=cfg.name_font_path, size=cfg.name_font_size)
         name_ruby_font = ImageFont.truetype(
             font=cfg.name_ruby_font_path, size=cfg.name_ruby_font_size
         )
         name_text_img, rendered_name = create_textarea(
-            name_text,
+            cfg.name_text,
             w=namebox_size[0] - (cfg.name_margin.left + cfg.name_margin.right),
             h=namebox_size[1] - (cfg.name_margin.top + cfg.name_margin.bottom),
             margin=cfg.name_margin,
@@ -94,7 +99,7 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
         output.name_text = rendered_name
 
     # options
-    if len(option_texts) > 0:
+    if len(cfg.option_texts) > 0:
         optionbox_size = (
             cfg.optionbox_br[0] - cfg.optionbox_tl[0],
             cfg.optionbox_br[1] - cfg.optionbox_tl[1],
@@ -106,7 +111,7 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
             alpha=cfg.optionbox_alpha,
         )
 
-        add_ruby = "<ruby>" in option_texts[0]
+        add_ruby = "<ruby>" in cfg.option_texts[0]
         option_font = ImageFont.truetype(
             font=cfg.option_font_path, size=cfg.name_font_size
         )
@@ -114,7 +119,7 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
             font=cfg.option_ruby_font_path, size=cfg.name_ruby_font_size
         )
         option_text_img, rendered_option = create_textarea(
-            option_texts[0],
+            cfg.option_texts[0],
             w=optionbox_size[0] - (cfg.option_margin.left + cfg.option_margin.right),
             h=optionbox_size[1] - (cfg.option_margin.top + cfg.option_margin.bottom),
             margin=cfg.option_margin,
@@ -133,7 +138,7 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
         output.option_texts.append(rendered_option)
 
     # option2
-    if len(option_texts) > 1:
+    if len(cfg.option_texts) > 1:
         optionbox2 = create_textbox(
             w=optionbox_size[0],
             h=optionbox_size[1],
@@ -141,9 +146,9 @@ def create_image(cfg: CFG1, text: str, name_text: str, option_texts=[]) -> Outpu
             alpha=cfg.optionbox_alpha,
         )
 
-        add_ruby = "<ruby>" in option_texts[1]
+        add_ruby = "<ruby>" in cfg.option_texts[1]
         option2_text_img, rendered_option2 = create_textarea(
-            option_texts[1],
+            cfg.option_texts[1],
             w=optionbox_size[0] - (cfg.option_margin.left + cfg.option_margin.right),
             h=optionbox_size[1] - (cfg.option_margin.top + cfg.option_margin.bottom),
             margin=cfg.option_margin,

@@ -8,3 +8,8 @@ venv-test
 ipynb_checkpoints
 __pycache__
 .vscode
+output_datasets
+output_images
+messages.csv
+names.csv
+options.csv
