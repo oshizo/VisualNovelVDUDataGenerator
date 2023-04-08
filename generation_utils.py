@@ -1,5 +1,7 @@
 from PIL import Image, ImageDraw
 from configs import Margin
+from colorutils import Color
+import random
 
 hiragana_range = (0x3041, 0x3096)
 katakana_range = (0x30A1, 0x30F6)
@@ -16,6 +18,26 @@ def to_katakana(text):
     return text.translate(translation_table)
 
 
+def get_random_color_pair():
+    is_dark_font = random.random() > 0.5
+    font_hex = Color(
+        hsv=(
+            random.uniform(0, 360),
+            random.uniform(0.0, 0.5),
+            random.uniform(0, 0.3) if is_dark_font else random.uniform(0.7, 1),
+        )
+    ).hex
+    bg_hex = Color(
+        hsv=(
+            random.uniform(0, 360),
+            random.uniform(0.0, 0.5),
+            random.uniform(0.7, 1) if is_dark_font else random.uniform(0, 0.3),
+        )
+    ).hex
+
+    return font_hex, bg_hex
+
+
 def create_textbox(w, h, hex, alpha=255):
     shape = [(0, 0), (w, h)]
     img = Image.new("RGB", (w, h))
@@ -25,8 +47,11 @@ def create_textbox(w, h, hex, alpha=255):
     return img
 
 
-def get_height(font, c):
-    return font.getmetrics()[0] + font.getmetrics()[1]
+def get_height(font):
+    return font.size
+    # baselineからascentとdescentの合計を返す
+    # フォントによっては行間が大きくなりすぎるので、やめてフォントサイズを返すことにした
+    # return font.getmetrics()[0] + font.getmetrics()[1]
 
 
 def create_textarea(
@@ -64,10 +89,9 @@ def create_textarea(
 
     if add_ruby:
         # ルビの描画位置を確保するために、ルビの高さをyに加算
-        y += get_height(ruby_font, "あ") + ruby_line_spacing
+        y += get_height(ruby_font) + ruby_line_spacing
 
     # テキストを1文字ずつ描画する際の一時情報
-    max_height = -1  # 1行の最大高さ（文字により高さが異なるため、行ごとに高さを計算する必要がある）
     in_ruby_target = False
 
     ruby = ""
@@ -131,8 +155,7 @@ def create_textarea(
                         )
 
                 # 高さ計算
-                ruby_max_height = max([get_height(ruby_font, rc) for rc in ruby])
-                ruby_y = y - (ruby_max_height + ruby_line_spacing)
+                ruby_y = y - (get_height(ruby_font) + ruby_line_spacing)
 
                 # ルビを1文字ずつ描画
                 for rc in ruby:
@@ -178,20 +201,16 @@ def create_textarea(
 
         # 改行処理
         if insert_new_line:
-            y += max_height + line_spacing
+            y += get_height(font) + line_spacing
             if add_ruby:
-                y += get_height(ruby_font, "あ") + ruby_line_spacing
+                y += get_height(ruby_font) + ruby_line_spacing
             x = margin.left
-            max_height = -1
 
-            if y + get_height(font, c) > h + margin.top + margin.bottom:
+            if y + get_height(font) > h + margin.top + margin.bottom:
                 return text_img, rendered_text  # 改行までに描画した文字列を返す
                 # raise ValueError(
                 #     f"Height was insufficient at new line. {y + get_height(font, c)} > {h + margin.top + margin.bottom}"
                 # )
-
-        # 改行時の行高さをその行の文字の最大高さで計算
-        max_height = max(max_height, get_height(font, c))
 
         # draw character
         text_img_draw.text((x, y), c, fill=font_color, font=font)  # , anchor="lt")

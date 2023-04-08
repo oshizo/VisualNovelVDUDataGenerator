@@ -35,7 +35,7 @@ class CFG1:
     msg_character_spacing = 5
     msg_font_size = 50
     msg_ruby_font_size = 20
-    msg_ruby_line_spacing = -15
+    msg_ruby_line_spacing = 0
     msg_ruby_character_spacing = 1
     msg_font_color = tuple([int(c) for c in Color(hsv=(0, 0, 1)).rgb])
     msg_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf"
@@ -53,7 +53,7 @@ class CFG1:
     name_character_spacing = 5
     name_font_size = 44
     name_ruby_font_size = 16
-    name_ruby_line_spacing = -10
+    name_ruby_line_spacing = 0
     name_ruby_character_spacing = 0
     name_font_color = tuple([int(c) for c in Color(hsv=(0, 0, 1)).rgb])
     name_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf"
@@ -74,7 +74,7 @@ class CFG1:
     option_character_spacing = 5
     option_font_size = 50
     option_ruby_font_size = 20
-    option_ruby_line_spacing = -15
+    option_ruby_line_spacing = 0
     option_ruby_character_spacing = 1
     option_font_color = tuple([int(c) for c in Color(hsv=(0, 0, 1)).rgb])
     option_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf"
