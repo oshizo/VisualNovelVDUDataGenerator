@@ -1,7 +1,10 @@
 *.otf
 *.ttf
+*.TTC
 *.png
 *.jpg
 venv
 venv-test
 ipynb_checkpoints
+__pycache__
+.vscode
