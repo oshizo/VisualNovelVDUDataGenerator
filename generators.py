@@ -14,6 +14,8 @@ class Outputs:
     option_texts: list
 
 
+# CFG1用の画像生成関数
+# メッセージボックス1つ、名前ボックス0～1個、選択肢0～N個
 def create_image(cfg: CFG1) -> Outputs:
     output = Outputs(option_texts=[])
 
@@ -99,10 +101,12 @@ def create_image(cfg: CFG1) -> Outputs:
         output.name_text = rendered_name
 
     # options
-    if len(cfg.option_texts) > 0:
+    for option_text, option_tl, option_br in zip(
+        cfg.option_texts, cfg.optionbox_tl_list, cfg.optionbox_br_list
+    ):
         optionbox_size = (
-            cfg.optionbox_br[0] - cfg.optionbox_tl[0],
-            cfg.optionbox_br[1] - cfg.optionbox_tl[1],
+            option_br[0] - option_tl[0],
+            option_br[1] - option_tl[1],
         )
         optionbox = create_textbox(
             w=optionbox_size[0],
@@ -111,7 +115,7 @@ def create_image(cfg: CFG1) -> Outputs:
             alpha=cfg.optionbox_alpha,
         )
 
-        add_ruby = "<ruby>" in cfg.option_texts[0]
+        add_ruby = "<ruby>" in option_text
         option_font = ImageFont.truetype(
             font=cfg.option_font_path, size=cfg.name_font_size
         )
@@ -119,7 +123,7 @@ def create_image(cfg: CFG1) -> Outputs:
             font=cfg.option_ruby_font_path, size=cfg.name_ruby_font_size
         )
         option_text_img, rendered_option = create_textarea(
-            cfg.option_texts[0],
+            option_text,
             w=optionbox_size[0] - (cfg.option_margin.left + cfg.option_margin.right),
             h=optionbox_size[1] - (cfg.option_margin.top + cfg.option_margin.bottom),
             margin=cfg.option_margin,
@@ -134,36 +138,8 @@ def create_image(cfg: CFG1) -> Outputs:
             ruby_line_spacing=cfg.option_ruby_line_spacing,
         )
         optionbox.paste(option_text_img, (0, 0), option_text_img)
-        img.paste(optionbox, cfg.optionbox_tl, optionbox)
+        img.paste(optionbox, option_tl, optionbox)
         output.option_texts.append(rendered_option)
 
-    # option2
-    if len(cfg.option_texts) > 1:
-        optionbox2 = create_textbox(
-            w=optionbox_size[0],
-            h=optionbox_size[1],
-            hex=cfg.optionbox_hex,
-            alpha=cfg.optionbox_alpha,
-        )
-
-        add_ruby = "<ruby>" in cfg.option_texts[1]
-        option2_text_img, rendered_option2 = create_textarea(
-            cfg.option_texts[1],
-            w=optionbox_size[0] - (cfg.option_margin.left + cfg.option_margin.right),
-            h=optionbox_size[1] - (cfg.option_margin.top + cfg.option_margin.bottom),
-            margin=cfg.option_margin,
-            font=option_font,
-            font_color=cfg.option_font_color,
-            character_spacing=cfg.option_character_spacing,
-            line_spacing=cfg.option_line_spacing,
-            add_ruby=add_ruby,
-            ruby_font=option_ruby_font,
-            ruby_font_color=cfg.option_font_color,
-            ruby_character_spacing=cfg.option_ruby_character_spacing,
-            ruby_line_spacing=cfg.option_ruby_line_spacing,
-        )
-        optionbox2.paste(option2_text_img, (0, 0), option2_text_img)
-        img.paste(optionbox2, cfg.optionbox2_tl, optionbox2)
-        output.option_texts.append(rendered_option2)
     output.image = img
     return output

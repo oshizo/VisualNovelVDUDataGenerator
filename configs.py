@@ -35,7 +35,7 @@ class CFG1:
     msg_character_spacing = 5
     msg_font_size = 50
     msg_ruby_font_size = 20
-    msg_ruby_line_spacing = 0
+    msg_ruby_line_spacing = 2
     msg_ruby_character_spacing = 1
     msg_font_color = tuple([int(c) for c in Color(hsv=(0, 0, 1)).rgb])
     msg_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf"
@@ -53,20 +53,17 @@ class CFG1:
     name_character_spacing = 5
     name_font_size = 44
     name_ruby_font_size = 16
-    name_ruby_line_spacing = 0
+    name_ruby_line_spacing = 2
     name_ruby_character_spacing = 0
     name_font_color = tuple([int(c) for c in Color(hsv=(0, 0, 1)).rgb])
     name_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf"
     name_ruby_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Bold.otf"
 
     # option box
-    optionbox_tl = (230, 250)
-    optionbox_br = (1680, 385)
+    optionbox_tl_list = [(230, 250), (230, 435)]
+    optionbox_br_list = [(1680, 385), (1680, 570)]
     optionbox_hex = Color(hsv=(0, 0.0, 0.05)).hex
     optionbox_alpha = 255
-
-    optionbox2_tl = (230, 435)
-    optionbox2_br = (1680, 570)
 
     # option text area
     option_margin = Margin(top=20, right=0, left=30, bottom=0)
@@ -74,8 +71,26 @@ class CFG1:
     option_character_spacing = 5
     option_font_size = 50
     option_ruby_font_size = 20
-    option_ruby_line_spacing = 0
+    option_ruby_line_spacing = 2
     option_ruby_character_spacing = 1
     option_font_color = tuple([int(c) for c in Color(hsv=(0, 0, 1)).rgb])
     option_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf"
     option_ruby_font_path = "./fonts/SourceHanSansJP/SourceHanSansJP-Bold.otf"
+
+    def namebox_minheight(self):
+        return (
+            self.name_font_size
+            + self.name_ruby_font_size
+            + self.name_ruby_line_spacing
+            + self.name_margin.top
+            + self.name_margin.bottom
+        )
+
+    def optionbox_minheight(self):
+        return (
+            self.option_font_size
+            + self.option_ruby_font_size
+            + self.option_ruby_line_spacing
+            + self.option_margin.top
+            + self.option_margin.bottom
+        )

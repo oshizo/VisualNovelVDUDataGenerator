@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw
 from configs import Margin
 from colorutils import Color
 import random
+import re
 
 hiragana_range = (0x3041, 0x3096)
 katakana_range = (0x30A1, 0x30F6)
@@ -16,6 +17,13 @@ translation_table = str.maketrans(
 
 def to_katakana(text):
     return text.translate(translation_table)
+
+
+def split_sentence(text):
+    sentences = re.findall(r"[^。！？\!\?]+[。！？\!\?]", text)
+    if len(sentences) == 0:
+        return [text]
+    return sentences
 
 
 def get_random_color_pair():
@@ -208,9 +216,6 @@ def create_textarea(
 
             if y + get_height(font) > h + margin.top + margin.bottom:
                 return text_img, rendered_text  # 改行までに描画した文字列を返す
-                # raise ValueError(
-                #     f"Height was insufficient at new line. {y + get_height(font, c)} > {h + margin.top + margin.bottom}"
-                # )
 
         # draw character
         text_img_draw.text((x, y), c, fill=font_color, font=font)  # , anchor="lt")
