@@ -32,6 +32,13 @@ class Size:
         return (self.width, self.height)
 
 
+import re
+
+
+def remove_ruby_tags(text):
+    return re.sub(r"<ruby>(.*?)<rt>.*?</rt></ruby>", r"\1", text)
+
+
 @dataclass
 class TextBoxCFG:
 
@@ -72,24 +79,56 @@ class TextBoxCFG:
         font="./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf", size=20
     )
 
-    line_spacing: int = 0
-    character_spacing: int = 5
-    ruby_line_spacing: int = 2
+    line_spacing: int = 10
+    character_spacing: int = 3
+    ruby_line_spacing: int = 0
     ruby_character_spacing: int = 1
 
     @property
-    def minheight(self):
-        return (
-            self.font_size
-            + self.ruby_font_size
-            + self.ruby_line_spacing
-            + self.margin.top
-            + self.margin.bottom
-        )
+    def minheight(self) -> int:
+        if self.has_ruby:
+            return (
+                self.font.size
+                + self.ruby_font.size
+                + self.ruby_line_spacing
+                + self.margin.top
+                + self.margin.bottom
+            )
+        else:
+            return int(self.font.size) + self.margin.top + self.margin.bottom
 
     @property
     def size(self):
         return Size(width=self.br.x - self.tl.x, height=self.br.y - self.tl.y)
+
+    def max_font_size(self) -> int:
+        fs = (
+            self.size.height
+            - (self.margin.top + self.margin.bottom)
+            - self.line_spacing
+        )
+
+        if self.has_ruby:
+            fs -= self.ruby_font.size + self.ruby_line_spacing
+        return fs
+
+    def max_font_size_whole_text(self) -> int:
+        max_fs = -1
+        nchar = len(remove_ruby_tags(self.text))
+        W = self.size.width - (self.margin.left + self.margin.right)
+        H = self.size.height - (self.margin.top + self.margin.bottom)
+        wspace = self.character_spacing
+        hspace = self.line_spacing
+        if self.has_ruby:
+            hspace += self.ruby_line_spacing + self.ruby_font.size
+        for nrow in range(1, 5):  # 最大4行を想定
+            # 幅が収まる条件と、高さが収まる条件のうち、小さい方を採用
+            max_fs_nrow = min((nrow * W // nchar) - wspace, (H // nrow) - hspace)
+            max_fs = max(max_fs, max_fs_nrow)
+        return max_fs
+
+    def change_font_size(self, size: int):
+        self.font = ImageFont.truetype(self.font.path, size=int(size))
 
 
 @dataclass

@@ -13,7 +13,6 @@ class Outputs:
     name_text = None
     option_texts: list
 
-
 # CFG1用の画像生成関数
 # メッセージボックス1つ、名前ボックス0～1個、選択肢0～N個
 def create_image(cfg: CFG1) -> Outputs:
@@ -64,7 +63,6 @@ def create_image(cfg: CFG1) -> Outputs:
 
     output.image = img
     return output
-
 
 # def create_image(cfg: CFG1) -> Outputs:
 #     output = Outputs(option_texts=[])
