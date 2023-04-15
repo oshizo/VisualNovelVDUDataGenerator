@@ -1,51 +1,26 @@
-from PIL import Image, ImageDraw
-from configs import Margin, Point, TextBoxCFG, ImageCFG, Size
-from colorutils import Color
 import random
-import re
-
-hiragana_range = (0x3041, 0x3096)
-katakana_range = (0x30A1, 0x30F6)
-
-translation_table = str.maketrans(
-    {
-        chr(code): chr(code - hiragana_range[0] + katakana_range[0])
-        for code in range(hiragana_range[0], hiragana_range[1] + 1)
-    }
-)
+from PIL import Image, ImageDraw
+from configs import Point, TextBoxCFG
+from colorutils import Color
 
 
-def to_katakana(text):
-    return text.translate(translation_table)
-
-
-
-
-def split_sentence(text):
-    sentences = re.findall(r"[^。！？\!\?]+[。！？\!\?]", text)
-    if len(sentences) == 0:
-        return [text]
-    return sentences
-
-
-def get_random_color_pair():
+def get_random_color_pair(s: float = None):
     is_dark_font = random.random() > 0.5
-    font_hex = Color(
+    font = Color(
         hsv=(
             random.uniform(0, 360),
-            random.uniform(0.0, 0.5),
+            s if s is not None else random.uniform(0.0, 0.5),
             random.uniform(0, 0.3) if is_dark_font else random.uniform(0.7, 1),
         )
-    ).hex
-    bg_hex = Color(
+    )
+    bg = Color(
         hsv=(
             random.uniform(0, 360),
-            random.uniform(0.0, 0.5),
+            s if s is not None else random.uniform(0.0, 0.5),
             random.uniform(0.7, 1) if is_dark_font else random.uniform(0, 0.3),
         )
-    ).hex
-
-    return font_hex, bg_hex
+    )
+    return font.hex, bg.hex
 
 
 def create_box(w: int, h: int, hex: str, alpha: int = 255):
@@ -71,6 +46,8 @@ def get_tiled_option_cfgs(
     br: Point,
     cfgs: list[TextBoxCFG],
     fit_font: bool = True,
+    margin_h=20,
+    margin_w=50,
 ):
     """
     nrow: 縦方向に並べる画像の数
@@ -86,13 +63,11 @@ def get_tiled_option_cfgs(
     """
     assert len(cfgs) <= nrow * ncol
 
-    max_h = ((br.y - tl.y) // nrow) - 5  # 最低5pxのマージンを確保
+    max_h = ((br.y - tl.y) // nrow) - margin_h
     h = min(max_h, cfgs[0].size.height)
-    margin_h = ((br.y - tl.y) // nrow) - h
 
-    max_w = ((br.x - tl.x) // ncol) - 5  # 最低5pxのマージンを確保
+    max_w = ((br.x - tl.x) // ncol) - margin_w
     w = min(max_w, cfgs[0].size.width)
-    margin_w = ((br.x - tl.x) // ncol) - w
 
     for irow in range(nrow):
         for icol in range(ncol):
@@ -136,8 +111,8 @@ def create_textarea(cfg: TextBoxCFG):
     text_img = Image.new(
         "RGBA",
         (
-            size.width + margin.right + margin.left,
-            size.height + margin.top + margin.bottom,
+            size.width,  # + margin.right + margin.left,
+            size.height,  # + margin.top + margin.bottom,
         ),
         (0, 0, 0, 0),  # 背景色（透明）
     )
@@ -212,11 +187,10 @@ def create_textarea(cfg: TextBoxCFG):
                         _ruby_character_spacing = ruby_character_spacing
 
                         if ruby_x < 0:
-                            # 一文字目に長いrubyがある場合はみ出すことがあるため、エラーを上げる
-                            pass
-                            # raise ValueError(
-                            #     f"Ruby overflowed from the left of the text area. {ruby_x}"
-                            # )
+                            # 一文字目に長いrubyがある場合描画範囲からはみ出すことがあるため、エラーを上げる
+                            raise ValueError(
+                                f"Ruby overflowed from the left of the text area. {ruby_x}"
+                            )
 
                     # 高さ計算
                     ruby_y = y - (get_height(ruby_font) + ruby_line_spacing)
@@ -227,12 +201,11 @@ def create_textarea(cfg: TextBoxCFG):
                             (ruby_x, ruby_y), rc, fill=font_hex, font=ruby_font
                         )
                         ruby_x += ruby_font.getlength(rc) + _ruby_character_spacing
-                        if ruby_x - _ruby_character_spacing > text_img.size[0]:
-                            pass
+                        if ruby_x - _ruby_character_spacing > size.width:
                             # 右側にはみ出した場合は描画されないため、エラーを上げる
-                            # raise ValueError(
-                            #     f"Ruby overflowed from the right of the text area. {ruby_x - _ruby_character_spacing} > {size.width + margin.right}"
-                            # )
+                            raise ValueError(
+                                f"Ruby overflowed from the right of the text area. {ruby_x - _ruby_character_spacing} > {size.width}"
+                            )
                 rendered_text = text[: i + 1]
 
                 # ルビ情報リセット
@@ -251,18 +224,14 @@ def create_textarea(cfg: TextBoxCFG):
             if not ruby_newline_checked:
                 # ルビ対象中は改行しない
                 # ルビ対象文字の1文字目にルビ終了までの長さを先読みして改行判定
-                insert_new_line = (
-                    x
-                    + sum(
-                        [font.getlength(_c) + character_spacing for _c in ruby_target]
-                    )
-                    > size.width
-                )
+                insert_new_line = x + sum(
+                    [font.getlength(_c) + character_spacing for _c in ruby_target]
+                ) > (size.width - margin.right)
                 if insert_new_line:
                     ruby_target_x["left"] = margin.left
                 ruby_newline_checked = True
         else:
-            insert_new_line = x + font.getlength(c) > size.width
+            insert_new_line = x + font.getlength(c) > (size.width - margin.right)
 
         # 改行処理
         if insert_new_line:

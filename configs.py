@@ -1,7 +1,7 @@
 import dataclasses
 from dataclasses import dataclass
-from colorutils import Color
 from PIL import ImageFont
+from utils import remove_ruby_tags
 
 
 @dataclass
@@ -32,13 +32,6 @@ class Size:
         return (self.width, self.height)
 
 
-import re
-
-
-def remove_ruby_tags(text):
-    return re.sub(r"<ruby>(.*?)<rt>.*?</rt></ruby>", r"\1", text)
-
-
 @dataclass
 class TextBoxCFG:
 
@@ -62,7 +55,7 @@ class TextBoxCFG:
 
     text: str = ""
     ruby: str = ""
-    has_ruby: bool = True
+    # has_ruby: bool = True
 
     tl: Point = Point(x=0, y=0)
     br: Point = Point(x=200, y=100)
@@ -129,6 +122,10 @@ class TextBoxCFG:
 
     def change_font_size(self, size: int):
         self.font = ImageFont.truetype(self.font.path, size=int(size))
+
+    @property
+    def has_ruby(self):
+        return "<ruby>" in self.text
 
 
 @dataclass

@@ -1,22 +1,36 @@
-from generation_utils import create_textarea, create_box
-from PIL import Image, ImageFont
-from configs import CFG1
-
+import dataclasses
 from dataclasses import dataclass
-from colorutils import Color
+from PIL import Image
+from utils import remove_ruby_tags
+from configs import CFG1
+from generation_utils import create_textarea, create_box
 
 
 @dataclass
 class Outputs:
-    image = None
-    text = None
-    name_text = None
-    option_texts: list
+    image: Image = None
+
+    text_ruby: str = None
+    name_text_ruby: str = None
+    option_texts_ruby: list = dataclasses.field(default_factory=list)
+
+    @property
+    def text(self):
+        return remove_ruby_tags(self.text_ruby)
+
+    @property
+    def name_text(self):
+        return remove_ruby_tags(self.name_text_ruby)
+
+    @property
+    def option_texts(self):
+        return [remove_ruby_tags(option) for option in self.option_texts_ruby]
+
 
 # CFG1用の画像生成関数
 # メッセージボックス1つ、名前ボックス0～1個、選択肢0～N個
-def create_image(cfg: CFG1) -> Outputs:
-    output = Outputs(option_texts=[])
+def generate_data(cfg: CFG1) -> Outputs:
+    output = Outputs()
 
     # bg
     bg = Image.open(cfg.bg_cfg.path).resize((cfg.W, cfg.H))
@@ -35,7 +49,7 @@ def create_image(cfg: CFG1) -> Outputs:
     msg_text_img, rendered_msg = create_textarea(cfg.msgbox)
     msgbox_img.paste(msg_text_img, (0, 0), msg_text_img)
     img.paste(msgbox_img, cfg.msgbox.tl.tuple, msgbox_img)
-    output.text = rendered_msg
+    output.text_ruby = rendered_msg
 
     # name
     if cfg.namebox is not None:
@@ -47,7 +61,7 @@ def create_image(cfg: CFG1) -> Outputs:
         name_text_img, rendered_name = create_textarea(cfg.namebox)
         namebox_img.paste(name_text_img, (0, 0), name_text_img)
         img.paste(namebox_img, cfg.namebox.tl.tuple, namebox_img)
-        output.name_text = rendered_name
+        output.name_text_ruby = rendered_name
 
     # options
     for option_cfg in cfg.optionbox_list:
@@ -59,10 +73,11 @@ def create_image(cfg: CFG1) -> Outputs:
         option_text_img, rendered_option = create_textarea(option_cfg)
         optionbox_img.paste(option_text_img, (0, 0), option_text_img)
         img.paste(optionbox_img, option_cfg.tl.tuple, optionbox_img)
-        output.option_texts.append(rendered_option)
+        output.option_texts_ruby.append(rendered_option)
 
     output.image = img
     return output
+
 
 # def create_image(cfg: CFG1) -> Outputs:
 #     output = Outputs(option_texts=[])
