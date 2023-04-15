@@ -1,8 +1,9 @@
 *.otf
 *.ttf
 *.TTC
-*.png
-*.jpg
+bgimages
+fgimages
+output_images*
 venv
 venv-test
 ipynb_checkpoints
