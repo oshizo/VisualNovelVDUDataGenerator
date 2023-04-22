@@ -46,6 +46,7 @@ def get_tiled_option_cfgs(
     br: Point,
     cfgs: list[TextBoxCFG],
     fit_font: bool = True,
+    nowrap: bool = False,
     margin_h=20,
     margin_w=50,
 ):
@@ -65,9 +66,15 @@ def get_tiled_option_cfgs(
 
     max_h = ((br.y - tl.y) // nrow) - margin_h
     h = min(max_h, cfgs[0].size.height)
+    if nowrap:
+        # 1行レイアウトの場合は、テキストの高さに合わせてサイズを調整する
+        h = min(h, cfgs[0].minheight)
 
     max_w = ((br.x - tl.x) // ncol) - margin_w
     w = min(max_w, cfgs[0].size.width)
+
+    # tl.yとbr.yの中心周りに配置する
+    starty = int(tl.y + (br.y - tl.y) // 2 - (h * nrow + margin_h * (nrow - 1)) // 2)
 
     for irow in range(nrow):
         for icol in range(ncol):
@@ -76,16 +83,22 @@ def get_tiled_option_cfgs(
                 break
             # 引数のcfgを上書き
             cfg = cfgs[i]
-            cfg.tl = Point(tl.x + icol * (w + margin_w), tl.y + irow * (h + margin_h))
+            cfg.tl = Point(tl.x + icol * (w + margin_w), starty + irow * (h + margin_h))
             cfg.br = Point(cfg.tl.x + w, cfg.tl.y + h)
 
             if fit_font:
                 # テキストの長さに応じてフォントサイズを調節
                 max_font_size_nrows = cfg.max_font_size_whole_text()
-                cfg.change_font_size(max_font_size_nrows)
+                # cfg.change_font_size(max(max_font_size_nrows, 28))  # 28未満にはしない
+                cfg.change_font_size(max_font_size_nrows)  # 28未満にはしない
+
             else:
                 # 1行で高さがはみ出す場合にフォントサイズを調節
                 cfg.change_font_size(min(cfg.max_font_size(), cfg.font.size))
+
+            # ルビはfontサイズの1/4～1/2にする
+            cfg.change_ruby_font_size(min(cfg.ruby_font.size, cfg.font.size // 2))
+            cfg.change_ruby_font_size(max(cfg.ruby_font.size, cfg.font.size // 4))
 
     return cfgs
 
@@ -254,167 +267,3 @@ def create_textarea(cfg: TextBoxCFG):
         x += font.getlength(c) + character_spacing
 
     return text_img, text
-
-
-# def create_textarea(
-#     text: str,
-#     w: int,
-#     h: int,
-#     margin: Margin,
-#     font,
-#     font_color,
-#     character_spacing,  # 文字間隔
-#     line_spacing,  # 行間
-#     add_ruby,  # ルビを追加するかどうか
-#     ruby_font,
-#     ruby_font_color,
-#     ruby_character_spacing,  # ルビの文字間隔
-#     ruby_line_spacing,  # ルビとルビ対象文字列の間のスペース
-# ):
-#     rendered_text = ""  # 描画済みのテキスト（改行ではみ出す場合は途中で返却する）
-
-#     # テキストはw, hの範囲に描画する
-#     # ルビのはみ出しはmarginまで許容し、それ以上はみ出すと描画されない
-#     text_img = Image.new(
-#         "RGBA",
-#         (
-#             w + margin.right + margin.left,
-#             h + margin.top + margin.bottom,
-#         ),
-#         (0, 0, 0, 0),  # 背景色（透明）
-#     )
-#     text_img_draw = ImageDraw.Draw(text_img)
-
-#     # テキスト描画の開始位置
-#     x = margin.left
-#     y = margin.top
-
-#     if add_ruby:
-#         # ルビの描画位置を確保するために、ルビの高さをyに加算
-#         y += get_height(ruby_font) + ruby_line_spacing
-
-#     # テキストを1文字ずつ描画する際の一時情報
-#     in_ruby_target = False
-
-#     ruby = ""
-#     ruby_target = ""
-#     ruby_target_x = {"left": -1, "right": -1}
-#     ruby_newline_checked = False
-
-#     # テキストを1文字ずつ描画
-#     # <ruby>漢字<rt>かんじ</rt></ruby> の形式を想定
-#     # 一つの<ruby>タグに複数の<rt>は含められない（rubyタグ自体を複数使って記述する必要がある）
-#     next_i = -1
-#     for i, c in enumerate(text):
-#         # タグの読み飛ばし
-#         if next_i > i:
-#             continue
-
-#         if c == "<":  # タグ記述の開始時
-#             tag = text[i : i + text[i:].index(">") + 1]  # <ruby>の場合、tag = "<ruby>"
-
-#             if tag == "<ruby>":
-#                 ruby_newline_checked = False  # このループで文字描画前にルビ対象文字中に改行があるかを判定する
-#                 ruby_target = text[i + 6 : i + 6 + text[i + 6 :].index("<")]  # ルビ対象文字列
-#                 ruby_target_x["left"] = x  # ruby対象文字列の開始x
-#                 in_ruby_target = True
-#                 next_i = i + 6  # タグが終わるまで読み飛ばす（次の文字はルビ対象文字列の1文字目）
-
-#             elif tag == "</ruby>":
-#                 in_ruby_target = False
-#                 next_i = i + 7  # タグが終わるまで読み飛ばす
-
-#             elif tag == "<rt>":
-#                 ruby = text[i + 4 : i + 4 + text[i + 4 :].index("<")]  # ルビ文字列
-#                 ruby_target_x["right"] = x - character_spacing  # ruby対象文字列の右端のx座標
-#                 next_i = i + 4 + text[i + 4 :].index("<")  # ルビの最期まで読み飛ばす（次の文字は</rt>の<）
-
-#             elif tag == "</rt>":
-#                 # ルビを一括で描画する
-#                 ruby_target_width = ruby_target_x["right"] - ruby_target_x["left"]
-#                 ruby_center_x = (ruby_target_x["left"] + ruby_target_x["right"]) / 2
-
-#                 # ルビ対象文字列の幅と、ルビを普通に配置した時の幅を両方計算して比較する
-#                 ruby_characters_width = sum([ruby_font.getlength(rc) for rc in ruby])
-#                 ruby_calcled_width = ruby_characters_width + (
-#                     ruby_character_spacing * (len(ruby) + 1)
-#                 )
-#                 if ruby_target_width > ruby_calcled_width and len(ruby) > 1:
-#                     # ルビ対象文字列の幅が広い場合は、ruby_target_xの間に均等割り付け
-#                     _ruby_character_spacing = (
-#                         ruby_target_width - ruby_characters_width
-#                     ) / (len(ruby) + 1)
-#                     ruby_x = ruby_target_x["left"] + _ruby_character_spacing
-#                 else:
-#                     # 幅が足りない場合（私（わたくし）など）は、ruby_center_x周りにruby_character_spacingで配置
-#                     ruby_x = ruby_center_x - ruby_calcled_width / 2
-#                     _ruby_character_spacing = ruby_character_spacing
-
-#                     if ruby_x < 0:
-#                         # 一文字目に長いrubyがある場合はみ出すことがあるため、エラーを上げる
-#                         raise ValueError(
-#                             f"Ruby overflowed from the left of the text area. {ruby_x}"
-#                         )
-
-#                 # 高さ計算
-#                 ruby_y = y - (get_height(ruby_font) + ruby_line_spacing)
-
-#                 # ルビを1文字ずつ描画
-#                 for rc in ruby:
-#                     text_img_draw.text(
-#                         (ruby_x, ruby_y), rc, fill=ruby_font_color, font=ruby_font
-#                     )
-#                     ruby_x += ruby_font.getlength(rc) + _ruby_character_spacing
-#                     if ruby_x - _ruby_character_spacing > w + margin.right:
-#                         # 右側にはみ出した場合は描画されないため、エラーを上げる
-#                         raise ValueError(
-#                             f"Ruby overflowed from the right of the text area. {ruby_x - _ruby_character_spacing} > {w + margin.right}"
-#                         )
-#                 rendered_text = text[: i + 1]
-
-#                 # ルビ情報リセット
-#                 ruby_target_x = {"left": -1, "right": -1}
-#                 ruby = ""
-#                 ruby_target = ""
-#                 next_i = i + 5  # タグが終わるまで読み飛ばす
-
-#             else:
-#                 raise ValueError(f"Invalid tag: {tag}")
-#             continue
-
-#         # 改行判定
-#         insert_new_line = False
-#         if in_ruby_target:
-#             if not ruby_newline_checked:
-#                 # ルビ対象中は改行しない
-#                 # ルビ対象文字の1文字目にルビ終了までの長さを先読みして改行判定
-#                 insert_new_line = (
-#                     x
-#                     + sum(
-#                         [font.getlength(_c) + character_spacing for _c in ruby_target]
-#                     )
-#                     > w
-#                 )
-#                 if insert_new_line:
-#                     ruby_target_x["left"] = margin.left
-#                 ruby_newline_checked = True
-#         else:
-#             insert_new_line = x + font.getlength(c) > w
-
-#         # 改行処理
-#         if insert_new_line:
-#             y += get_height(font) + line_spacing
-#             if add_ruby:
-#                 y += get_height(ruby_font) + ruby_line_spacing
-#             x = margin.left
-
-#             if y + get_height(font) > h + margin.top + margin.bottom:
-#                 return text_img, rendered_text  # 改行までに描画した文字列を返す
-
-#         # draw character
-#         text_img_draw.text((x, y), c, fill=font_color, font=font)  # , anchor="lt")
-#         rendered_text = text[: i + 1]
-
-#         x += font.getlength(c) + character_spacing
-
-#     return text_img, text
