@@ -89,8 +89,12 @@ def get_tiled_option_cfgs(
             if fit_font:
                 # テキストの長さに応じてフォントサイズを調節
                 max_font_size_nrows = cfg.max_font_size_whole_text()
-                # cfg.change_font_size(max(max_font_size_nrows, 28))  # 28未満にはしない
-                cfg.change_font_size(max_font_size_nrows)  # 28未満にはしない
+
+                # 28より小さくなる場合は、1行レイアウトの最大サイズcfg.max_font_size()にする
+                cfg.change_font_size(
+                    min(cfg.max_font_size(), max(max_font_size_nrows, 28))
+                )
+                # cfg.change_font_size(max_font_size_nrows)  # 28未満にはしない
 
             else:
                 # 1行で高さがはみ出す場合にフォントサイズを調節

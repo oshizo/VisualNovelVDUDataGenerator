@@ -26,23 +26,30 @@ class Outputs:
     def option_texts(self):
         return [remove_ruby_tags(option) for option in self.option_texts_ruby]
 
-
     def to_gt_parse(self):
         # ルビ情報なし
         gt_parse = {}
-        gt_parse["options"] = self.option_texts    
+        gt_parse["options"] = (
+            [self.option_texts] if self.option_texts is not None else []
+        )
         gt_parse["names"] = [self.name_text] if self.name_text is not None else []
         gt_parse["messages"] = [self.text] if self.text is not None else []
         return gt_parse
-    
+
     def to_gt_parse_ruby(self):
         # ルビ情報付き
         gt_parse_ruby = {}
-        gt_parse_ruby["options"] = self.option_texts_ruby
-        gt_parse_ruby["names"] = [self.name_text_ruby] if self.name_text_ruby is not None else []
-        gt_parse_ruby["messages"] = [self.text_ruby] if self.text_ruby is not None else []
+        gt_parse_ruby["options"] = (
+            [self.option_texts_ruby] if self.option_texts_ruby else []
+        )
+        gt_parse_ruby["names"] = (
+            [self.name_text_ruby] if self.name_text_ruby is not None else []
+        )
+        gt_parse_ruby["messages"] = (
+            [self.text_ruby] if self.text_ruby is not None else []
+        )
         return gt_parse_ruby
-        
+
 
 # CFG1用の画像生成関数
 # メッセージボックス1つ、名前ボックス0～1個、選択肢0～N個
@@ -60,13 +67,14 @@ def generate_data(cfg: CFG1) -> Outputs:
         img.paste(fg, ch_cfg.tl.tuple, fg)
 
     # message
-    msgbox_img = create_box(
-        *cfg.msgbox.size.tuple, hex=cfg.msgbox.bg_hex, alpha=cfg.msgbox.bg_alpha
-    )
-    msg_text_img, rendered_msg = create_textarea(cfg.msgbox)
-    msgbox_img.paste(msg_text_img, (0, 0), msg_text_img)
-    img.paste(msgbox_img, cfg.msgbox.tl.tuple, msgbox_img)
-    output.text_ruby = rendered_msg
+    if cfg.msgbox is not None:
+        msgbox_img = create_box(
+            *cfg.msgbox.size.tuple, hex=cfg.msgbox.bg_hex, alpha=cfg.msgbox.bg_alpha
+        )
+        msg_text_img, rendered_msg = create_textarea(cfg.msgbox)
+        msgbox_img.paste(msg_text_img, (0, 0), msg_text_img)
+        img.paste(msgbox_img, cfg.msgbox.tl.tuple, msgbox_img)
+        output.text_ruby = rendered_msg
 
     # name
     if cfg.namebox is not None:
