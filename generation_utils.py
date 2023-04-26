@@ -107,7 +107,18 @@ def get_tiled_option_cfgs(
     return cfgs
 
 
-def create_textarea(cfg: TextBoxCFG):
+def create_textbox(cfg: TextBoxCFG) -> tuple[Image.Image, str]:
+    box = create_box(*cfg.size.tuple, hex=cfg.bg_hex, alpha=cfg.bg_alpha)
+    textarea, rendered_text, max_x = create_textarea(cfg)
+
+    textarea_tl = (0, 0)
+    if cfg.centering:
+        textarea_tl = (int((cfg.size.width - max_x - cfg.margin.left) // 2), 0)
+    box.paste(textarea, textarea_tl, textarea)
+    return box, rendered_text
+
+
+def create_textarea(cfg: TextBoxCFG) -> tuple[Image.Image, str, int]:
     rendered_text = ""  # 描画済みのテキスト（改行ではみ出す場合は描画したところまでを返却する）
 
     text = cfg.text
@@ -134,6 +145,9 @@ def create_textarea(cfg: TextBoxCFG):
         (0, 0, 0, 0),  # 背景色（透明）
     )
     text_img_draw = ImageDraw.Draw(text_img)
+
+    # centeringのためにテキストの右端を記憶する
+    text_max_x = -1
 
     # テキスト描画の開始位置
     x = margin.left
@@ -218,6 +232,7 @@ def create_textarea(cfg: TextBoxCFG):
                             (ruby_x, ruby_y), rc, fill=font_hex, font=ruby_font
                         )
                         ruby_x += ruby_font.getlength(rc) + _ruby_character_spacing
+                        text_max_x = max(text_max_x, ruby_x - _ruby_character_spacing)
                         if ruby_x - _ruby_character_spacing > size.width:
                             # 右側にはみ出した場合は描画されないため、エラーを上げる
                             raise ValueError(
@@ -262,12 +277,13 @@ def create_textarea(cfg: TextBoxCFG):
             if has_ruby:
                 next_line_bottom_y += get_height(ruby_font) + ruby_line_spacing
             if next_line_bottom_y > text_img.size[1]:
-                return text_img, rendered_text  # 改行までに描画した文字列を返す
+                return text_img, rendered_text, text_max_x  # 改行までに描画した文字列を返す
 
         # draw character
         text_img_draw.text((x, y), c, fill=font_hex, font=font)  # , anchor="lt")
         rendered_text = text[: i + 1]
 
         x += font.getlength(c) + character_spacing
+        text_max_x = max(text_max_x, x - character_spacing)
 
-    return text_img, text
+    return text_img, text, text_max_x

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from PIL import Image
 from utils import remove_ruby_tags
 from configs import CFG1
-from generation_utils import create_textarea, create_box
+from generation_utils import create_textarea, create_textbox
 
 
 @dataclass
@@ -68,35 +68,19 @@ def generate_data(cfg: CFG1) -> Outputs:
 
     # message
     if cfg.msgbox is not None:
-        msgbox_img = create_box(
-            *cfg.msgbox.size.tuple, hex=cfg.msgbox.bg_hex, alpha=cfg.msgbox.bg_alpha
-        )
-        msg_text_img, rendered_msg = create_textarea(cfg.msgbox)
-        msgbox_img.paste(msg_text_img, (0, 0), msg_text_img)
+        msgbox_img, rendered_msg = create_textbox(cfg.msgbox)
         img.paste(msgbox_img, cfg.msgbox.tl.tuple, msgbox_img)
         output.text_ruby = rendered_msg
 
     # name
     if cfg.namebox is not None:
-        namebox_img = create_box(
-            *cfg.namebox.size.tuple,
-            hex=cfg.namebox.bg_hex,
-            alpha=cfg.namebox.bg_alpha,
-        )
-        name_text_img, rendered_name = create_textarea(cfg.namebox)
-        namebox_img.paste(name_text_img, (0, 0), name_text_img)
+        namebox_img, rendered_name = create_textbox(cfg.namebox)
         img.paste(namebox_img, cfg.namebox.tl.tuple, namebox_img)
         output.name_text_ruby = rendered_name
 
     # options
     for option_cfg in cfg.optionbox_list:
-        optionbox_img = create_box(
-            *option_cfg.size.tuple,
-            hex=option_cfg.bg_hex,
-            alpha=option_cfg.bg_alpha,
-        )
-        option_text_img, rendered_option = create_textarea(option_cfg)
-        optionbox_img.paste(option_text_img, (0, 0), option_text_img)
+        optionbox_img, rendered_option = create_textbox(option_cfg)
         img.paste(optionbox_img, option_cfg.tl.tuple, optionbox_img)
         output.option_texts_ruby.append(rendered_option)
 

@@ -76,6 +76,7 @@ class TextBoxCFG:
     character_spacing: int = 3
     ruby_line_spacing: int = 5
     ruby_character_spacing: int = 1
+    centering : bool = False
 
     @property
     def minheight(self) -> int:
