@@ -76,7 +76,7 @@ class TextBoxCFG:
     character_spacing: int = 3
     ruby_line_spacing: int = 5
     ruby_character_spacing: int = 1
-    centering : bool = False
+    centering: bool = False
 
     @property
     def minheight(self) -> int:
@@ -171,3 +171,6 @@ class CFG1:
     msgbox: TextBoxCFG = TextBoxCFG()
     namebox: TextBoxCFG = TextBoxCFG()
     optionbox_list: list[TextBoxCFG] = dataclasses.field(default_factory=list)
+
+    # 文字起こししない要素
+    noocrbox_list: list[TextBoxCFG] = dataclasses.field(default_factory=list)

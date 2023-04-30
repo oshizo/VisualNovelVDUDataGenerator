@@ -66,6 +66,12 @@ def generate_data(cfg: CFG1) -> Outputs:
         fg = fg.resize((int(fg.width * (cfg.H / fg.height)), cfg.H))
         img.paste(fg, ch_cfg.tl.tuple, fg)
 
+    # UI要素
+    for noocr_cfg in cfg.noocrbox_list:
+        noocrbox_img, _ = create_textbox(noocr_cfg)
+        img.paste(noocrbox_img, noocr_cfg.tl.tuple, noocrbox_img)
+        # ★OCR対象ではないため、outputに追加しない
+
     # message
     if cfg.msgbox is not None:
         msgbox_img, rendered_msg = create_textbox(cfg.msgbox)
