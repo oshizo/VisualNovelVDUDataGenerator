@@ -190,6 +190,8 @@ class ImageCFG:
 
 @dataclass
 class CFG1:
+    # メッセージボックスと名前は0または1つずつ、選択肢は複数持つ設定
+
     W: int = 1920
     H: int = 1080
 
@@ -199,10 +201,21 @@ class CFG1:
     # キャラクターの位置
     character_cfg_list: list[ImageCFG] = dataclasses.field(default_factory=list)
 
-    # メッセージボックスと名前1つ、選択肢は複数
     msgbox: TextBoxCFG = TextBoxCFG()
     namebox: TextBoxCFG = TextBoxCFG()
     optionbox_list: list[TextBoxCFG] = dataclasses.field(default_factory=list)
 
     # 文字起こししない要素
     noocrbox_list: list[TextBoxCFG] = dataclasses.field(default_factory=list)
+
+
+@dataclass
+class CFG_CHAT:
+    # @TODO チャットのようなメッセージボックスと名前を複数、同じ数ずつ持つ設定
+    pass
+
+
+@dataclass
+class CFG_LOG:
+    # @TODO ログ画面用の設定
+    pass
