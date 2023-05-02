@@ -7,6 +7,7 @@ fgimages
 output_images*
 venv
 venv-test
+venv-debug
 ipynb_checkpoints
 __pycache__
 .vscode
