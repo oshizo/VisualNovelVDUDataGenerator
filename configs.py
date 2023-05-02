@@ -32,6 +32,16 @@ class Size:
         return (self.width, self.height)
 
 
+DEFAULT_FONT_PATH: str = "./fonts/BIZUDGothic-Bold.ttf"
+
+
+def _get_default_font(size) -> ImageFont:
+    return ImageFont.truetype(
+        font=DEFAULT_FONT_PATH,
+        size=size,
+    )
+
+
 @dataclass
 class TextBoxCFG:
 
@@ -65,18 +75,40 @@ class TextBoxCFG:
     bg_alpha: int = 255
 
     font_hex: str = "#000000"
-    font: ImageFont = ImageFont.truetype(
-        font="./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf", size=50
-    )
-    ruby_font: ImageFont = ImageFont.truetype(
-        font="./fonts/SourceHanSansJP/SourceHanSansJP-Medium.otf", size=20
-    )
+
+    _font: ImageFont = _get_default_font(50)
+    fallback_font: ImageFont = _get_default_font(50)
+    _ruby_font: ImageFont = _get_default_font(20)
+    fallback_ruby_font: ImageFont = _get_default_font(20)
 
     line_spacing: int = 10
     character_spacing: int = 3
     ruby_line_spacing: int = 5
     ruby_character_spacing: int = 1
     centering: bool = False
+
+    @property
+    def font(self):
+        return self._font
+
+    @font.setter
+    def font(self, value: ImageFont):
+        self._font = value
+        # フォールバックフォントのサイズを合わせる
+        self.fallback_font = ImageFont.truetype(
+            font=self.fallback_font.path, size=self._font.size
+        )
+
+    @property
+    def ruby_font(self):
+        return self._ruby_font
+
+    @ruby_font.setter
+    def ruby_font(self, value: ImageFont):
+        self._ruby_font = value
+        self.fallback_ruby_font = ImageFont.truetype(
+            font=self.fallback_ruby_font.path, size=self._ruby_font.size
+        )
 
     @property
     def minheight(self) -> int:

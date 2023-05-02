@@ -1,6 +1,7 @@
 *.otf
 *.ttf
 *.TTC
+!BIZUDGothic-Bold.ttf
 bgimages
 fgimages
 output_images*
@@ -11,6 +12,5 @@ __pycache__
 .vscode
 output_datasets
 output_images
-messages.csv
-names.csv
-options.csv
+texts/*.csv
+!texts/*sample*
