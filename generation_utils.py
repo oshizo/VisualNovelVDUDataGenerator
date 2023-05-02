@@ -111,7 +111,7 @@ def get_tiled_option_cfgs(
 import functools
 
 
-@functools.lru_cache(maxsize=30)
+@functools.lru_cache(maxsize=50)
 def load_ttfont(path):
     try:
         return TTFont(path)
@@ -119,7 +119,7 @@ def load_ttfont(path):
         return None
 
 
-@functools.lru_cache(maxsize=6000 * 21)
+@functools.lru_cache(maxsize=6000 * 50)
 def ttfont_has_glyph(path, glyph):
     ttfont = load_ttfont(path)
 
