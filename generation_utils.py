@@ -108,26 +108,40 @@ def get_tiled_option_cfgs(
     return cfgs
 
 
-def ttfont_has_glyph(ttfont, glyph):
+import functools
+
+
+@functools.lru_cache(maxsize=30)
+def load_ttfont(path):
+    try:
+        return TTFont(path)
+    except:
+        return None
+
+
+@functools.lru_cache(maxsize=6000 * 21)
+def ttfont_has_glyph(path, glyph):
+    ttfont = load_ttfont(path)
+
+    if ttfont is None:
+        return True
+
     for table in ttfont["cmap"].tables:
         if ord(glyph) in table.cmap.keys():
             return True
-    return False
+        return False
 
 
-def char_in_font(font, ttfont, char):
+def char_in_font(font, char):
     # has_glyphがTrueでも、代替文字を設定していない場合なにもレンダリングされない場合がある
     # その場合、getmask(char).size[1]が0になることがある。
     # スペースなどの一部の文字も0になるが、それらをフォールバックフォントで描画しても問題ないため、
     # 0の場合は一律フォールバックフォントを使うことにする
     if font.getmask(char).size[1] == 0:
         return False
-
-    if ttfont is None:
-        return True
     else:
         # フォントによっては代替文字（四角にバツ印など）を用意しているので、TTFontで確認する
-        return ttfont_has_glyph(ttfont, char)
+        return ttfont_has_glyph(font.path, char)
 
 
 def create_textbox(cfg: TextBoxCFG) -> tuple[Image.Image, str]:
@@ -156,18 +170,9 @@ def create_textarea(cfg: TextBoxCFG) -> tuple[Image.Image, str, int]:
     font_hex = cfg.font_hex
 
     font = cfg.font
-    # ttfontは文字があるかを判定するために使う
-    try:
-        ttfont = TTFont(font.path)
-    except:
-        ttfont = None
     fallback_font = cfg.fallback_font  # 文字がない場合のフォールバック先
 
     ruby_font = cfg.ruby_font
-    try:
-        ruby_ttfont = TTFont(font.path)
-    except:
-        ruby_ttfont = None
     fallback_ruby_font = cfg.fallback_ruby_font
 
     # テキストはw, hの範囲に描画する
@@ -269,7 +274,7 @@ def create_textarea(cfg: TextBoxCFG) -> tuple[Image.Image, str, int]:
                             rc,
                             fill=font_hex,
                             font=ruby_font
-                            if char_in_font(ruby_font, ruby_ttfont, rc)
+                            if char_in_font(ruby_font, rc)
                             else fallback_ruby_font,
                         )
                         ruby_x += ruby_font.getlength(rc) + _ruby_character_spacing
@@ -325,7 +330,7 @@ def create_textarea(cfg: TextBoxCFG) -> tuple[Image.Image, str, int]:
             (x, y),
             c,
             fill=font_hex,
-            font=font if char_in_font(font, ttfont, c) else fallback_font,
+            font=font if char_in_font(font, c) else fallback_font,
         )  # , anchor="lt")
         rendered_text = text[: i + 1]
 
