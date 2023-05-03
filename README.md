@@ -47,12 +47,16 @@ PIL.ImageDrawを使って動的に画像を生成します。
 
 ```<ruby>複数<rt>ふくすう</rt></ruby>の箇所にルビを表示したいときの<ruby>例<rt>れい<rt><ruby>です。```
 
-### 生成画像の例
-
-
 
 ## ライセンス
 
 ソースコードのライセンスはMITですが、`fonts/BIZUDGothic-Bold.ttf`はSIL OPEN FONT LICENSEに従います。
 
 このことを明示するため、[googlefonts/morisawa-biz-ud-gothic](https://github.com/googlefonts/morisawa-biz-ud-gothic)の`OFL.txt`を`fonts/OFL.txt`にコピーしています。
+
+
+### 生成画像の例
+![sample_01](https://raw.githubusercontent.com/oshizo/VisualNovelVDUDataGenerator/main/sample_outputs/sample_01.png)
+![sample_02](https://raw.githubusercontent.com/oshizo/VisualNovelVDUDataGenerator/main/sample_outputs/sample_02.png)
+![sample_03](https://raw.githubusercontent.com/oshizo/VisualNovelVDUDataGenerator/main/sample_outputs/sample_03.png)
+
